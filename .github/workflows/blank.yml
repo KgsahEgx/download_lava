@@ -8,18 +8,18 @@ jobs:
       - name: Pull Image from GitLab
         run: |
           # 拉取镜像
-          docker pull registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2025.06
+          docker pull registry.gitlab.com/lava/lava/amd64/lava-server:2025.06
           
       - name: Save Image to Tar
         run: |
           # 导出为 tar 文件
-          docker save registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2025.06 -o lava-dispatcher.tar
+          docker save registry.gitlab.com/lava/lava/amd64/lava-server:2025.06 -o lava-server.tar
           # 压缩一下减小体积 (可选)
-          gzip lava-dispatcher.tar
+          gzip lava-server.tar
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lava-dispatcher-image
-          path: lava-dispatcher.tar.gz
+          name: lava-server-image
+          path: lava-server.tar.gz
           retention-days: 1
