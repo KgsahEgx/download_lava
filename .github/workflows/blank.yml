@@ -1,0 +1,25 @@
+name: Download LAVA Image
+on: workflow_dispatch # 允许手动点击按钮触发
+
+jobs:
+  download-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull Image from GitLab
+        run: |
+          # 拉取镜像
+          docker pull registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2025.06
+          
+      - name: Save Image to Tar
+        run: |
+          # 导出为 tar 文件
+          docker save registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2025.06 -o lava-dispatcher.tar
+          # 压缩一下减小体积 (可选)
+          gzip lava-dispatcher.tar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lava-dispatcher-image
+          path: lava-dispatcher.tar.gz
+          retention-days: 1
