@@ -1,0 +1,40 @@
+name: Mirror Docker Image to Release
+on: workflow_dispatch # 手动触发
+
+permissions:
+  contents: write # 赋予写权限以创建 Release
+
+jobs:
+  mirror-to-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull and Save Docker Image
+        run: |
+          echo "开始拉取镜像..."
+          # 定义镜像地址
+          IMG_NAME="registry.gitlab.com/lava/lava/amd64/lava-server:2025.06"
+          FILE_NAME="lava-server-2025.06.tar.gz"
+          
+          # 拉取
+          docker pull $IMG_NAME
+          
+          # 导出并压缩
+          echo "正在导出并压缩..."
+          docker save $IMG_NAME | gzip > $FILE_NAME
+          
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
+          ls -lh $FILE_NAME
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: tools-download   # Release 的标签名，固定使用这个
+          name: "LAVA Offline Images"
+          files: ${{ env.FILE_NAME }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
