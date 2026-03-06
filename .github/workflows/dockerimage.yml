@@ -1,0 +1,43 @@
+name: Mirror Image to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: '完整的镜像名称 (如: mc1arke/sonarqube-with-community-branch-plugin:26.2.0.119303-community)'
+        required: true
+        default: 'mc1arke/sonarqube-with-community-branch-plugin:26.2.0.119303-community'
+      tag_name:
+        description: 'Release 标签名称 (如: v26.2.0)'
+        required: true
+        default: 'v26.2.0'
+
+permissions:
+  contents: write
+
+jobs:
+  mirror-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pull Docker Image
+        run: docker pull ${{ github.event.inputs.image_name }}
+
+      - name: Save Docker Image to Tar
+        run: |
+          # 获取镜像的名称部分用于重命名 tar 文件
+          IMAGE_SHORT_NAME=$(echo "${{ github.event.inputs.image_name }}" | awk -F'[:/]' '{print $(NF-1)}')
+          TAG_SHORT_NAME=$(echo "${{ github.event.inputs.image_name }}" | awk -F':' '{print $NF}')
+          docker save ${{ github.event.inputs.image_name }} > image.tar
+          echo "IMAGE_FILE_NAME=${IMAGE_SHORT_NAME}_${TAG_SHORT_NAME}.tar" >> $GITHUB_ENV
+
+      - name: Create Release and Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: Mirror - ${{ github.event.inputs.image_name }}
+          body: "镜像存档，方便服务器拉取。\n使用方法：\n`docker load < ${{ env.IMAGE_FILE_NAME }}`"
+          files: |
+            image.tar
