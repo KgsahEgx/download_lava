@@ -1,0 +1,27 @@
+name: Mirror Docker Image
+
+on:
+  workflow_dispatch: # 手动触发，或者设置 schedule: cron 自动同步
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # 需要写权限来推送到 GHCR
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and Push
+        run: |
+          # 拉取原镜像
+          docker pull mc1arke/sonarqube-with-community-branch-plugin:26.2.0.119303-community
+          # 重新打标签（ghcr.io 的镜像名通常必须包含你的 github 用户名）
+          docker tag mc1arke/sonarqube-with-community-branch-plugin:26.2.0.119303-community ghcr.io/${{ github.repository_owner }}/sonarqube-branch:latest
+          # 推送到 GHCR
+          docker push ghcr.io/${{ github.repository_owner }}/sonarqube-branch:latest
